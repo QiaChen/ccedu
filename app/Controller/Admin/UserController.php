@@ -13,6 +13,7 @@ declare(strict_types=1);
 namespace App\Controller\Admin;
 
 use App\Dao\UserDao;
+use App\Service\AuthService;
 use Hyperf\Di\Annotation\Inject;
 use Hyperf\HttpServer\Annotation\AutoController;
 
@@ -21,6 +22,9 @@ class UserController extends AdminController
 {
     #[Inject]
     protected UserDao $userDao;
+
+    #[Inject]
+    protected AuthService $authService;
 
     public function getUserInfo()
     {
@@ -31,71 +35,42 @@ class UserController extends AdminController
 
     public function getUserMenus()
     {
-        $data = [
-            [
-                'path' => '/dashboard',
-                'name' => 'Dashboard',
-                'component' => 'LAYOUT',
-                'redirect' => '/dashboard/console',
+        $userInfo = $this->userDao->getUserById($this->getUserId());
+        $list = $this->authService->getNodesByRid($userInfo->rid, $this->getAppCode());
+        $data = [];
+        foreach ($list as $key => $node) {
+            if ($node->is_menu != 1) {
+                continue;
+            }
+            $tmp = [
+                'nid' => $node->nid,
+                'parentid' => $node->parentid,
+                'path' => $node->route,
+                'name' => '',
+                'component' => $node->component,
                 'meta' => [
-                    'icon' => 'DashboardOutlined',
-                    'title' => 'Dashboard',
+                    'title' => $node->title,
                 ],
-                'children' => [
-                    [
-                        'path' => 'console',
-                        'name' => 'dashboard_console',
-                        'component' => '/dashboard/console/console',
-                        'meta' => [
-                            'title' => '主控台',
-                        ],
-                    ],
-                    [
-                        'path' => 'monitor',
-                        'name' => 'dashboard_monitor',
-                        'component' => '/dashboard/monitor/monitor',
-                        'meta' => [
-                            'title' => '监控页',
-                        ],
-                    ],
-                    [
-                        'path' => 'workplace',
-                        'name' => 'dashboard_workplace',
-                        'component' => '/dashboard/workplace/workplace',
-                        'meta' => [
-                            'title' => '工作台',
-                        ],
-                    ],
-                ],
-            ],
-            [
-                'path' => '/system',
-                'name' => '系统管理',
-                'component' => 'LAYOUT',
-                'redirect' => '/system/set',
-                'meta' => [
-                    'icon' => 'ControlOutlined',
-                    'title' => '系统管理',
-                ],
-                'children' => [
-                    [
-                        'path' => 'role',
-                        'name' => 'system_role',
-                        'component' => '/system/role/role',
-                        'meta' => [
-                            'title' => '角色管理',
-                        ],
-                    ], [
-                        'path' => 'menu',
-                        'name' => 'system_menu',
-                        'component' => '/system/menu/menu',
-                        'meta' => [
-                            'title' => '菜单权限',
-                        ],
-                    ],
-                ],
-            ],
-        ];
-        return $this->success('ok', $data);
+            ];
+
+            if (! empty($node->icon)) {
+                $tmp['meta']['icon'] = $node->icon;
+            }
+            $data[] = $tmp;
+        }
+        $treeData = ListToTreeRecursive($data, 0, 'nid', 'parentid', 'children');
+
+        return $this->success('ok', $this->_setMenuName($treeData));
+    }
+
+    private function _setMenuName($treeData, $parent_name = '')
+    {   
+        foreach ($treeData as $key => $node) {
+            $treeData[$key]['name'] = $parent_name . str_replace('/', '', $node['path']);
+            if (isset($node['children']) && ! empty($node['children'])) {
+                $treeData[$key]['children'] = $this->_setMenuName($node['children'], $treeData[$key]['name'] .'_');
+            }
+        }
+        return $treeData;
     }
 }

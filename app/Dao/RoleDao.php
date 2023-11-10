@@ -72,4 +72,11 @@ class RoleDao extends Dao
             'appcode' => $appCode,
         ])->delete();
     }
+
+    public function get($rid, $appCode){
+        return $this->roleModel->where2query([
+            'rid' => $rid,
+            'appcode' => $appCode,
+        ])->first();
+    }
 }

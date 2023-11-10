@@ -21,12 +21,11 @@ class NodeDao extends Dao
     #[Inject]
     protected NodeModel $nodeModel;
 
-    public function getList($appCode = 0)
-    {
+    public function list($where = [],$appCode = 0)
+    {   
         $apps = AppCode::ROUTES();
-        return $this->nodeModel->newQuery()
-            ->where('app', 'index')
-            ->orWhere('app', $apps[$appCode])
+        $where['app'] = ['index',$apps[$appCode]];
+        return $this->nodeModel->where2query($where)
             ->orderBy('parentid', 'ASC')
             ->orderBy('sort', 'ASC')
             ->get();
@@ -34,7 +33,7 @@ class NodeDao extends Dao
 
     public function getTree(int $appCode = 0)
     {
-        return ListToTreeRecursive($this->getList($appCode), 0, 'nid', 'parentid', 'children');
+        return ListToTreeRecursive($this->list([],$appCode), 0, 'nid', 'parentid', 'children');
     }
 
     public function create($data, $appCode = 0)

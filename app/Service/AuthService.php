@@ -12,6 +12,8 @@ declare(strict_types=1);
 
 namespace App\Service;
 
+use App\Dao\NodeDao;
+use App\Dao\RoleDao;
 use App\Dao\UserDao;
 use App\Exception\AuthException;
 use Hyperf\Di\Annotation\Inject;
@@ -21,6 +23,12 @@ class AuthService extends Service
 {
     #[Inject]
     protected UserDao $userDao;
+
+    #[Inject]
+    protected NodeDao $nodeDao;
+
+    #[Inject]
+    protected RoleDao $roleDao;
 
     #[Inject]
     protected Redis $redis;
@@ -88,5 +96,19 @@ class AuthService extends Service
         $this->redis->SETNX($this->getTokenKey($token), serialize($data));
         $this->redis->expire($this->getTokenKey($token), 3600);
         return $token;
+    }
+
+    public function getNodesByRid($rid, $appCode)
+    {
+        if ($rid == 0) {
+            $where = [];
+        } else {
+            $role = $this->roleDao->get($rid);
+            if (empty($role)) {
+                throw new AuthException(AuthException::ROLE_NOT_FOUND);
+            }
+            $where['nid'] = explode(',', $role->nodes);
+        }
+        return $this->nodeDao->list($where, $appCode);
     }
 }

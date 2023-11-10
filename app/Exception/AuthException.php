@@ -24,7 +24,7 @@ class AuthException extends ServerException
 
     public const USER_NOT_FOUND = 404;
 
-    public const VALIDATION_FAILURE = 701;
+    public const ROLE_NOT_FOUND = 405;
 
     public function __construct(int $code = 0, $message = '')
     {
@@ -41,6 +41,7 @@ class AuthException extends ServerException
             self::UNAUTHORIZED => __('auth.unauthorized'),
             self::PERMISSION_DENIED => __('auth.Permission_denied'),
             self::USER_NOT_FOUND => __('auth.user_not_found'),
+            self::ROLE_NOT_FOUND => '没找到用户角色',
         ];
         return $msg[$code] ?? '';
     }
