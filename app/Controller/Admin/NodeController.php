@@ -22,25 +22,11 @@ class NodeController extends AdminController
     #[Inject]
     protected NodeDao $nodeDao;
 
-    public function getNodeList()
-    {
-    }
-
     public function create()
     {
-        $data = $this->request->all();
-        $validator = $this->validationFactory->make(
-            $data,
-            [
-                'title' => 'required|alpha_dash|between:1,20',
-            ],
-            [
-                'title.*' => __('node.node_title_required'),
-            ]
-        );
-        if ($validator->fails()) {
-            return $this->error($validator->errors()->first());
-        }
+        $data = $this->getRequestData([
+            'title' => 'required|alpha_dash|between:1,20',
+        ]);
         $this->nodeDao->create($data, $this->getAppCode());
         return $this->success('添加成功');
     }
@@ -56,12 +42,20 @@ class NodeController extends AdminController
         $data = $this->getRequestData([
             'nid' => 'required',
         ]);
-        
+
         if (isset($data['app'])) {
             unset($data['app']);
         }
 
         $this->nodeDao->update($data['nid'], $data, $this->getAppCode());
+        return $this->success('success');
+    }
+
+    public function delete(){
+        $data = $this->getRequestData([
+            'nid' => 'required',
+        ]);
+        $this->nodeDao->delete($data['nid'], $this->getAppCode());
         return $this->success('success');
     }
 }

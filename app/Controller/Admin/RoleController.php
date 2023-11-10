@@ -59,9 +59,6 @@ class RoleController extends AdminController
             'name' => 'required',
             'description' => 'required',
         ]);
-        if ($validator->fails()) {
-            return $this->error($validator->errors()->first());
-        }
         $this->roleDao->update($data['rid'], $data['name'], $data['description'], $this->getAppCode());
         return $this->success();
     }
@@ -71,7 +68,7 @@ class RoleController extends AdminController
         $data = $this->getRequestData([
             'rid' => 'required|integer',
         ]);
-        $this->roleDao->delete($rid, $this->getAppCode());
+        $this->roleDao->delete($data['rid'], $this->getAppCode());
         return $this->success();
     }
 }

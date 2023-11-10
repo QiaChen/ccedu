@@ -55,4 +55,12 @@ class NodeDao extends Dao
             'nid' => $nid, 'app' => $apps[$appCode]])
             ->update($data);
     }
+
+    public function delete($nid, $appCode)
+    {
+        $apps = AppCode::ROUTES();
+        return $this->nodeModel->where2query([
+            'nid' => $nid, 'app' => $apps[$appCode]
+            ])->delete();
+    }
 }
